@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog.Extensions.Logging;
 using MyTemplate.DbContexts.SqliteDbContext;
 using MyTemplate.DbContexts.MsSqlDbContext;
+using MyTemplate.Services;
 //using NLog;
 
 using MyTemplate.Controllers;
@@ -35,19 +37,23 @@ public class Startup
             {
                 // configure Logging with NLog
                 loggingBuilder.ClearProviders();
+                
                 loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+                loggingBuilder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
                 loggingBuilder.AddNLog();
             });
             services.Configure<AppOptions>(ctx.Configuration.GetSection("WorkingDirectory"));
             
-            services.AddTransient<MainController>();
-            //services.AddSqlite<MySqliteDbContext>(connectionString: ctx.Configuration.GetSection("SqliteConnectionString").Value);
+            services.AddTransient<DemoController>();
+            
             services.AddDbContext<MySqliteDbContext>(options =>
                 options.UseSqlite(ctx.Configuration.GetSection("SqliteConnectionString").Value));
+
             services.AddDbContext<MyMsSqlDbContext>(options => 
                 options.UseSqlServer(ctx.Configuration.GetSection("MsSqlConnectionString").Value));
 
-        services.AddTransient<SupportServicesPackage>();
+            services.AddTransient<IRuntimeEnvironment, MsWindowsRuntimeEnvironment>();
+            services.AddHttpClient();
         })
         .UseConsoleLifetime();
         
